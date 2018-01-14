@@ -9,7 +9,7 @@ import requests
 
 # this function works to traditional TP\MW router interface by the base64 encoded auth cookie.
 # without the login function, the getWanIp function can still work by referring the header and cookie contents.
-# headers are acquired, or the silly router will tell you "You have no authority to access this device!"
+# headers are necessary, or the silly router will tell you "You have no authority to access this device!"
 
 client=AcsClient(AccessKey,AccessSecret,"cn-hangzhou")
 
