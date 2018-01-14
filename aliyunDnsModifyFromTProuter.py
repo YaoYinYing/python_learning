@@ -68,7 +68,7 @@ def DescribeDns(client):
 
 # first add, get RecordID for modify
 
-# vaddReq=DescribeDnsclient)
+# vaddReq=DescribeDnsclient()
 
-# for modification, to get rid of the code problem, use re to filt the ip addr
+# for modification, to get rid of the code problem, use re to filt the extracted ip addr
 modifyDns=ModifyFtpDnsRequest(client,re.findall(r'\d+\.\d+\.\d+\.\d+',getWanIp(host,password))[0])
