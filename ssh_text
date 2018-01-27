@@ -1,0 +1,9 @@
+#!/usr/bin/expect -f  
+set timeout -1
+ spawn ssh root@host -p port  
+ expect "*password:"  
+ send "password\r"  
+ expect "*#"  
+ send "ifconfig\r"  
+ expect "*#"  
+ send "exit\r" 
