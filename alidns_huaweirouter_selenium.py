@@ -69,5 +69,5 @@ def getWanIp(host, session, encn):
 
 '''
 test_login_session,test_encn,test_ence=loginRouter(host=???,password=???)
-test_result=getWanIp(host='192.168.4.1',session=test_login_session,encn=test_ence)
+test_result=getWanIp(host=???,session=test_login_session,encn=test_ence)
 '''
