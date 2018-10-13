@@ -6,9 +6,8 @@
 import re
 import requests
 
-
 def getIpByNetSpeedTest():
-    r=requests.get("http://www.speedtest.net")
+    r=requests.get("http://yinlab.hzau.edu.cn/HZAU_DDNS")
     HZAU_IP = re.findall(r'122\.205\.\d{1,3}\.\d{1,3}',r.content.decode())[0]
     print(HZAU_IP)
 
