@@ -17,8 +17,7 @@ import time
 import traceback
 
 # long term maintaining list for members who have left this lab.
-unavailable_member = ["Administrator", "LHL", "lili", "PRJ", "rfy", "shikang", "YinlabBackup",
-                      "yinlabserver", "工作交接"]
+unavailable_member = ["..."]
 
 
 # Check file name. this function returns False when a filename without surfix--.log is given.
