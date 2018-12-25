@@ -1,6 +1,14 @@
 # -*- coding:utf8 -*-
 # This script is aimed to ftp backup log scanning.
 # created: 2018-12-21
+'''
+Changelog
+v1.0 2018-12-21
+
+v1.01 2018-12-22
+1. latest backup date.
+
+'''
 # maintainer: Yao Yin Ying
 
 import re
@@ -9,7 +17,9 @@ import time
 import traceback
 
 # long term maintaining list for members who have left this lab.
-unavailable_member =["..."]
+unavailable_member = ["Administrator", "LHL", "lili", "PRJ", "rfy", "shikang", "YinlabBackup",
+                      "yinlabserver", "工作交接"]
+
 
 # Check file name. this function returns False when a filename without surfix--.log is given.
 def file_checker(file_name):
@@ -59,7 +69,7 @@ def yinlab_members_list():
         pass
 
     os.system("del /q userlist")
-    #print(users_list_cmd[6:-2])
+    # print(users_list_cmd[6:-2])
     yinlab_member_list = []
     for user in users_list_cmd[6:-2]:
         yinlab_member_list.append(user.rstrip("\n"))
@@ -71,10 +81,11 @@ def yinlab_members_list():
 
 
 if __name__ == "__main__":
-    print("hoellw")
+    print("Initializing ... ")
+
     try:
         unbackup_members = yinlab_members_list()
-        backup_members = []
+        backup_members = {}
 
         working_dir = "F:/ftplog/FTPSVC1"
         result_dir = working_dir + "/result"
@@ -85,14 +96,13 @@ if __name__ == "__main__":
         analysis_log_file = result_dir + "/User_analysis_" + time.strftime("%Y_%m_%d_%H_%M_%S",
                                                                            time.localtime(int(time.time()))) + ".log"
         logging("Initializing ... ")
-
         # existed log will be read
         selected_log = os.listdir(working_dir)
         logging("Selected logs: \n%s" % selected_log)
 
         for log_file in selected_log:
             if file_checker(log_file):
-                print("Processing %s ... " %log_file)
+                print("Processing %s ... " % log_file)
                 log_date = "20" + re.findall(r'u_ex(\d{6}).log', log_file)[0]
 
                 log_date_formatted = '-'.join([log_date[:4], log_date[4:6], log_date[-2:]])
@@ -101,30 +111,32 @@ if __name__ == "__main__":
                 logging("Reading logfile: %s" % log_file)
                 logging("=========================================")
                 users_this_day = log_reading('/'.join([working_dir, log_file]))
-                logging("Member\t\tCount")
+                logging("Member\t\t\t\t\tCount")
                 for user in users_this_day:
-                    logging("%s\t\t%s" % (user, users_this_day[user]))
-                    if user in unbackup_members:
+                    logging("%s%s%s" % (user, "\t"*int(6 - len(user) // 4) ,users_this_day[user]))
+                    if user in unbackup_members and users_this_day[user] > 1000:
                         unbackup_members.remove(user)
-                    if user not in backup_members:
-                        backup_members.append(user)
+                    if users_this_day[user] > 1000:
+                        backup_members[user] = log_date_formatted
                 pass
 
                 logging("=========================================")
                 logging("Finishing Reading logfile: %s\n" % log_file)
 
-
         logging("=========================================\n")
         logging("Finishing Analyzing.\n")
+
         logging("=========================================")
         logging("Here's member list with data backup.")
+        logging("-----------------------------------------")
+        logging("User\t\t\t\t\tLatest Update")
         logging("=========================================")
         for user in backup_members:
-            logging("%s\t" % (user))
+            logging("%s%s%s" % (user,"\t"*int(6 - len(user) // 4) ,backup_members[user]))
         logging("=========================================\n\n")
 
         logging("=========================================")
-        logging("Here're members need data backup.")
+        logging("Here're members without data backup.")
         logging("=========================================")
         for user in unbackup_members:
             logging("%s\t" % (user))
