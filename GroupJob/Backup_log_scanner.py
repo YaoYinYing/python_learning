@@ -23,10 +23,11 @@ import re
 import os
 import time
 import traceback
-from multiprocessing import Process,Queue
+from multiprocessing import Process, Queue
 
 # long term maintaining list for members who have left this lab.
-unavailable_member = [....]
+unavailable_member = ["Administrator", "LHL", "lili", "PRJ", "rfy", "shikang", "YinlabBackup",
+                      "yinlabserver", "工作交接", "xuemyun", ]
 
 
 # Check file name. this function returns False when a filename without surfix--.log is given.
@@ -69,11 +70,11 @@ def yinlab_members_list():
         yinlab_member_list.remove(member)
     return yinlab_member_list
 
+
 def get_fullname_put(q, user_list):
     print('Run subprocess %s (%s)...' % ("get fullname Put_Query", os.getpid()))
-    print(user_list)
-    def get_each_fullname(user):
 
+    def get_each_fullname(user):
         read = os.popen("net user %s" % user)
         user_info = (read.read()).split("\n")
         try:
@@ -82,9 +83,8 @@ def get_fullname_put(q, user_list):
         except Exception as e:
             logging(str(traceback.print_exc()))
             return "0"
-        pass
 
-    fullname_dict ={}
+    fullname_dict = {}
     for user in user_list:
         fullname_dict[user] = get_each_fullname(user)
         # print("Fullname = %s \t user = %s" % (fullname_dict[user],user))
@@ -92,17 +92,18 @@ def get_fullname_put(q, user_list):
     print('End subprocess %s (%s)...' % ("get fullname Put_Query", os.getpid()))
 
 
-    pass
-
-
 if __name__ == "__main__":
 
     try:
-
-
         print('Main process (%s) start ...' % os.getpid())
-        cutoff = int(input("Cutoff for file counting: "))
+        # cutoff = int(input("Cutoff for file counting: "))
+        cutoff = 200
+        print("Cutoff = %s by Default." % cutoff)
         unbackup_members = yinlab_members_list()
+        q = Queue()
+        fullname_put_proc = Process(target=get_fullname_put, args=(q, unbackup_members,))
+        fullname_put_proc.start()
+
         backup_members = {}
         fullname_dict = {}
         working_dir = "F:/ftplog/FTPSVC1"
@@ -119,12 +120,7 @@ if __name__ == "__main__":
         # existed log will be read
         selected_log = os.listdir(working_dir)
         logging("Selected logs: \n%s" % selected_log)
-        c =0
-
-        q=Queue()
-        fullname_put_proc =Process(target=get_fullname_put, args=(q, unbackup_members,))
-        #fullname_get_proc =Process(target = get_fullname_get,args=(q,))
-        fullname_put_proc.start()
+        c = 0
 
 
         for log_file in selected_log:
@@ -156,7 +152,6 @@ if __name__ == "__main__":
 
         fullname_put_proc.join()
         fullname_dict = q.get(block=True)
-        print(fullname_dict)
 
         logging("=========================================\n")
         logging("Finish Analyzing.\n")
@@ -167,7 +162,6 @@ if __name__ == "__main__":
         logging("User\t\t\t\t\tFullName\tLatest Update")
         logging("======================================================")
         for user in backup_members:
-            #fullname_dict[user] = get_each_fullname(user)
             logging("%s%s%s%s%s" % (user, "\t" * int(6 - len(bytes(user, encoding=('gbk'))) // 4), fullname_dict[user],
                                     "\t" * int(3 - len(bytes(fullname_dict[user], encoding=('gbk'))) // 4),
                                     backup_members[user]))
@@ -188,4 +182,3 @@ if __name__ == "__main__":
         print(traceback.print_exc())
         logging(str(traceback.print_exc()))
         print("An error is detected, please see the report for details.\n%s" % analysis_log_file)
-        pass
