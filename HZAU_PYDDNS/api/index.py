@@ -10,7 +10,6 @@ from aliyunsdkalidns.request.v20150109 import AddDomainRecordRequest
 from aliyunsdkalidns.request.v20150109 import UpdateDomainRecordRequest
 from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordsRequest
 from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordInfoRequest
-import re
 import time
 import sms_dns_change as sms
 from const import client, domain_name, token
@@ -46,7 +45,7 @@ def post_data():
     if token_post == token:
         return record_name
     else:
-        print({"401": "token error"})
+        print({"401": "TOKEN ERROR"})
         exit()
 
 
@@ -60,7 +59,7 @@ def describe_full_records(domain_name):
         r_j = json.loads(response.decode())
         return r_j
     except Exception as e:
-        print({"500": "Connection error"})
+        print({"503": "CONNECTION ERROR"})
         exit()
 
 
@@ -75,7 +74,7 @@ def search_name_from_full_records(name, response_full):
         return record_exist, []
 
 
-# Step 3a:  if name is not exists, create new records for the name
+# Step 3a:  if name is not exists, create new record for the name
 def create_record(domain_name, name, ip):
     add_domain_record = AddDomainRecordRequest.AddDomainRecordRequest()
     add_domain_record.set_action_name("AddDomainRecord")
@@ -91,7 +90,7 @@ def create_record(domain_name, name, ip):
             OK_response("200.1 OK")
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
-            print({"500": "Failed to create new record."})
+            print({"503": "Failed to create new record."})
             exit()
 
 
@@ -104,10 +103,11 @@ def describe_name_record(record_id):
     with open(log_file, "a") as logfile:
         try:
             response = client.do_action_with_exception(describe_request).decode()
-            ip_value_in_record = re.findall(r'\d+\.\d+\.\d+\.\d+', response)[0]
+            ip_value_in_record = json.loads(response)['Value']
             return ip_value_in_record
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
+            print({"503": "Failed to read full records."})
             exit()
 
 
@@ -127,6 +127,8 @@ def modify_record_name(name, record_id, new_ip_addr):
             OK_response("200.3 OK")
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
+            print({"503": "Failed to renew record."})
+            exit()
 
 
 client_ip = get_client_ip_addr()
