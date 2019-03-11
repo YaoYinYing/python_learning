@@ -75,7 +75,7 @@ def search_name_from_full_records(name, response_full):
         return record_exist, []
 
 
-# Step 3a:  if not name is not exists, create new records for the name
+# Step 3a:  if name is not exists, create new records for the name
 def create_record(domain_name, name, ip):
     add_domain_record = AddDomainRecordRequest.AddDomainRecordRequest()
     add_domain_record.set_action_name("AddDomainRecord")
