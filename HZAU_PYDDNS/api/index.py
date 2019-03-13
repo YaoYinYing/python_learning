@@ -16,6 +16,7 @@ from const import client, domain_name, token
 import cgi
 import json
 import os
+from ddns_db import insert_change,exist_and_count
 
 print("content-type:text/html")
 print("")
@@ -56,8 +57,7 @@ def describe_full_records(domain_name):
     descr.set_DomainName(domain_name)
     try:
         response = client.do_action_with_exception(descr)
-        r_j = json.loads(response.decode())
-        return r_j
+        return json.loads(response.decode())
     except Exception as e:
         print({"503": "CONNECTION ERROR"})
         exit()
@@ -87,7 +87,13 @@ def create_record(domain_name, name, ip):
             response = client.do_action_with_exception(add_domain_record)
             sms.dns_record_update_sms(name, "-".join(ip.split(".")))
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), response))
+            r_j = json.loads(response.decode())
+            request_id = r_j["RequestId"]
+            record_id = r_j["RecordId"]
+            insert_change(request_id=request_id,record_id = record_id,domain=domain_name, name =name,ip_addr= ip)
+            exist_and_count(domain_name,name,record_id)
             OK_response("200.1 OK")
+
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
             print({"503": "Failed to create new record."})
@@ -112,7 +118,7 @@ def describe_name_record(record_id):
 
 
 # Step 4. if name exists and changed in post, modify the name record.
-def modify_record_name(name, record_id, new_ip_addr):
+def modify_record_name(domain_name, name, record_id, new_ip_addr):
     ftpDnsModifyRequest = UpdateDomainRecordRequest.UpdateDomainRecordRequest()
     ftpDnsModifyRequest.set_action_name("UpdateDomainRecord")
     ftpDnsModifyRequest.set_RecordId(record_id)
@@ -124,6 +130,11 @@ def modify_record_name(name, record_id, new_ip_addr):
             response = client.do_action_with_exception(ftpDnsModifyRequest)
             sms.dns_record_update_sms(name, "-".join(new_ip_addr.split(".")))
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), response))
+            r_j = json.loads(response.decode())
+            request_id = r_j["RequestId"]
+            record_id = r_j["RecordId"]
+            insert_change(request_id=request_id, record_id=record_id, domain=domain_name, name=name, ip_addr=new_ip_addr)
+            exist_and_count(domain_name, name, record_id)
             OK_response("200.3 OK")
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
@@ -141,8 +152,9 @@ if is_name_existed:
     record_id = name_data['RecordId']
     ip_in_record = describe_name_record(record_id)
     if ip_in_record == client_ip:
+        exist_and_count(domain_name, name_post, record_id)
         OK_response("200.2 OK")
     else:
-        modify_record_name(name_post, record_id, client_ip)
+        modify_record_name(domain_name, name_post, record_id, client_ip)
 else:
     create_record(domain_name, name_post, client_ip)
