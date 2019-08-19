@@ -1,9 +1,14 @@
 import requests
 
-data = {"token": "my_token",
-        "name" : "record_name"}
-url = "https://host/DDNS/api/index.py"
+data = {"token": "token",
+        "name" : "name"}
+url = "https://host/HZAU_DDNS/api/index.py"
 
-r= requests.post(url, data=data)
-# print(r.status_code)
-print(r.content.decode())
+
+name_list = ["namelist"]
+
+for name in name_list:
+    data["name"] = name
+    r = requests.post(url, data=data)
+    print(r.status_code)
+    print(r.content.decode())
