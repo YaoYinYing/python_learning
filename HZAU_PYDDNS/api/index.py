@@ -24,7 +24,8 @@ import json
 import os
 from ddns_db import insert_change,exist_and_count
 
-
+import aliyunsdkcore.request
+aliyunsdkcore.request.set_default_protocol_type("https")
 
 log_file = "./Update.log"
 
