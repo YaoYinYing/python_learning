@@ -1,58 +1,25 @@
-# -*- coding: utf-8 -*-
-import sys
-from aliyunsdkdysmsapi.request.v20170525 import SendSmsRequest
-from aliyunsdkdysmsapi.request.v20170525 import QuerySendDetailsRequest
+#!/usr/bin/env python
+#coding=utf-8
+
 from aliyunsdkcore.client import AcsClient
-import uuid
-from aliyunsdkcore.profile import region_provider
-from aliyunsdkcore.http import method_type as MT
-from aliyunsdkcore.http import format_type as FT
+from aliyunsdkcore.request import CommonRequest
 import const
-import time
-import json
-import traceback
-
-try:
-    reload(sys)
-    sys.setdefaultencoding('utf8')
-except NameError:
-    pass
-except Exception as err:
-    raise err
-
-# 注意：不要更改
-REGION = "cn-hangzhou"
-PRODUCT_NAME = "Dysmsapi"
-DOMAIN = "dysmsapi.aliyuncs.com"
-
-acs_client = AcsClient(const.ACCESS_KEY_ID, const.ACCESS_KEY_SECRET, REGION)
-region_provider.add_endpoint(PRODUCT_NAME, REGION, DOMAIN)
-
-def send_sms(business_id, phone_numbers, sign_name, template_code, template_param=None):
-    smsRequest = SendSmsRequest.SendSmsRequest()
-    smsRequest.set_TemplateCode(template_code)
-    if template_param is not None:
-        smsRequest.set_TemplateParam(template_param)
-
-    smsRequest.set_OutId(business_id)
-    smsRequest.set_SignName(sign_name)
-    smsRequest.set_PhoneNumbers(phone_numbers)
-
-    # 调用短信发送接口，返回json
-    smsResponse = acs_client.do_action_with_exception(smsRequest)
-
-    return smsResponse
-
+client = AcsClient(const.ACCESS_KEY_ID, const.ACCESS_KEY_SECRET, 'cn-hangzhou')
 def dns_record_update_sms(name, newip):
-    __business_id = uuid.uuid1()
-    params = "{\"pcname\":\"" + name +"\",\"newip\":\"" + newip + "\"}"
-    try:
-        send_sms(__business_id, const.admin_phonenumber, const.sms_signature, const.sms_temp_code, params)
-    except Exception as e:
-        print({"500": "Fail to notify the administrator."})
+    request = CommonRequest()
+    request.set_accept_format('json')
+    request.set_domain('dysmsapi.aliyuncs.com')
+    request.set_method('POST')
+    request.set_protocol_type('https') # https | http
+    request.set_version('2017-05-25')
+    request.set_action_name('SendSms')
 
+    request.add_query_param('RegionId', "cn-hangzhou")
+    request.add_query_param('PhoneNumbers', const.admin_phonenumber)
+    request.add_query_param('SignName', const.sms_signature)
+    request.add_query_param('TemplateCode', const.sms_temp_code)
+    request.add_query_param('TemplateParam', "{\"pcname\":\"" + name +"\",\"newip\":\"" + newip + "\"}")
 
-   
-    
-    
-
+    response = client.do_action(request)
+    # python2:  print(response) 
+    print(str(response, encoding = 'utf-8'))
