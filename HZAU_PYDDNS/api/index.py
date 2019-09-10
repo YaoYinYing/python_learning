@@ -6,10 +6,16 @@
 
 
 import traceback
-from aliyunsdkalidns.request.v20150109 import AddDomainRecordRequest
-from aliyunsdkalidns.request.v20150109 import UpdateDomainRecordRequest
-from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordsRequest
-from aliyunsdkalidns.request.v20150109 import DescribeDomainRecordInfoRequest
+
+from aliyunsdkcore.client import AcsClient
+from aliyunsdkcore.acs_exception.exceptions import ClientException
+from aliyunsdkcore.acs_exception.exceptions import ServerException
+from aliyunsdkalidns.request.v20150109.DescribeDomainRecordsRequest import DescribeDomainRecordsRequest
+from aliyunsdkalidns.request.v20150109.AddDomainRecordRequest import AddDomainRecordRequest
+from aliyunsdkalidns.request.v20150109.DescribeDomainRecordInfoRequest import DescribeDomainRecordInfoRequest
+from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDomainRecordRequest
+
+
 import time
 import sms_dns_change as sms
 from const import client, domain_name, token
@@ -18,15 +24,31 @@ import json
 import os
 from ddns_db import insert_change,exist_and_count
 
-print("content-type:text/html")
-print("")
+
 
 log_file = "./Update.log"
 
+def error_response(response_code):
+    response_code_dict = {"401.1": "HTTPS REQUEST SCHEME IS REQUIRED.",
+                          "401.2": "TOKEN ERROR",
+                          "503.1": "CONNECTION ERROR",
+                          "503.2": "Failed to create new record.",
+                          "503.3": "Failed to read full records.",
+                          "503.4": "Failed to renew record.",
+                          }
+    # print("HTTP/1.1 %s OK\r\n" % response_code.split(".")[0])
+    print("content-type:text/html")
+    print("")
+    print({response_code: response_code_dict[response_code]})
+    exit()
+    pass
 
 def OK_response(response_code):
     response_code_dict = {"200.1 OK": "records created", "200.2 OK": "records unchanged",
                           "200.3 OK": "records modified."}
+    #print("HTTP/1.1 200 OK\r\n")
+    print("content-type:text/html")
+    print("")
     print({response_code: response_code_dict[response_code]})
 
 
@@ -34,8 +56,9 @@ def get_client_ip_addr():
     if os.environ['REQUEST_SCHEME'] == "https":
         return os.environ['REMOTE_ADDR']
     else:
-        print({"401": "HTTPS REQUEST SCHEME IS REQUIRED."})
-        exit()
+        error_response("401.1")
+        #print({"401.1": "HTTPS REQUEST SCHEME IS REQUIRED."})
+        
 
 
 def post_data():
@@ -46,21 +69,23 @@ def post_data():
     if token_post == token:
         return record_name
     else:
-        print({"401": "TOKEN ERROR"})
-        exit()
+        error_response("401.2")
+        #print({"401.2": "TOKEN ERROR"})
+        
 
 
-# Step 1: describe full records
+# Step 1: describe full records，updated 
 def describe_full_records(domain_name):
-    descr = DescribeDomainRecordsRequest.DescribeDomainRecordsRequest()
-    descr.set_action_name("DescribeDomainRecords")
-    descr.set_DomainName(domain_name)
+    request = DescribeDomainRecordsRequest()
+    request.set_accept_format('json')
+    request.set_DomainName(domain_name)
     try:
-        response = client.do_action_with_exception(descr)
+        response = client.do_action_with_exception(request)
         return json.loads(response.decode())
     except Exception as e:
-        print({"503": "CONNECTION ERROR"})
-        exit()
+        error_response("503.1")
+        #print({"503.1": "CONNECTION ERROR"})
+        
 
 
 # Step 2: search name from existed records
@@ -74,17 +99,17 @@ def search_name_from_full_records(name, response_full):
         return record_exist, []
 
 
-# Step 3a:  if name is not exists, create new record for the name
+# Step 3a:  if name is not exists, create new record for the name, updated
 def create_record(domain_name, name, ip):
-    add_domain_record = AddDomainRecordRequest.AddDomainRecordRequest()
-    add_domain_record.set_action_name("AddDomainRecord")
-    add_domain_record.set_DomainName(domain_name)
-    add_domain_record.set_RR(name)
-    add_domain_record.set_Type("A")
-    add_domain_record.set_Value(ip)
+    request = AddDomainRecordRequest()
+    request.set_accept_format('json')
+    request.set_DomainName(domain_name)
+    request.set_RR(name)
+    request.set_Type("A")
+    request.set_Value(ip)
     with open(log_file, 'a') as logfile:
         try:
-            response = client.do_action_with_exception(add_domain_record)
+            response = client.do_action_with_exception(request)
             sms.dns_record_update_sms(name, "-".join(ip.split(".")))
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), response))
             r_j = json.loads(response.decode())
@@ -96,38 +121,40 @@ def create_record(domain_name, name, ip):
 
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
-            print({"503": "Failed to create new record."})
-            exit()
+            error_response("503.2")
+            #print({"503.2": "Failed to create new record."})
+            
 
 
-# Step 3b: if name exists, describe record for the name
+# Step 3b: if name exists, describe record for the name, updated
 # return ip value in record
 def describe_name_record(record_id):
-    describe_request = DescribeDomainRecordInfoRequest.DescribeDomainRecordInfoRequest()
-    describe_request.set_action_name("DescribeDomainRecordInfo")
-    describe_request.set_RecordId(record_id)
+    request = DescribeDomainRecordInfoRequest()
+    request.set_accept_format('json')
+    request.set_RecordId(record_id)
     with open(log_file, "a") as logfile:
         try:
-            response = client.do_action_with_exception(describe_request).decode()
+            response = client.do_action_with_exception(request).decode()
             ip_value_in_record = json.loads(response)['Value']
             return ip_value_in_record
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
-            print({"503": "Failed to read full records."})
-            exit()
+            error_response("503.3")
+            #print({"503.3": "Failed to read full records."})
+            
 
 
-# Step 4. if name exists and changed in post, modify the name record.
+# Step 4. if name exists and changed in post, modify the name record. updated
 def modify_record_name(domain_name, name, record_id, new_ip_addr):
-    ftpDnsModifyRequest = UpdateDomainRecordRequest.UpdateDomainRecordRequest()
-    ftpDnsModifyRequest.set_action_name("UpdateDomainRecord")
-    ftpDnsModifyRequest.set_RecordId(record_id)
-    ftpDnsModifyRequest.set_Type("A")
-    ftpDnsModifyRequest.set_Value(new_ip_addr)
-    ftpDnsModifyRequest.set_RR(name)
+    request = UpdateDomainRecordRequest()
+    request.set_accept_format('json')
+    request.set_RecordId(record_id)
+    request.set_RR(name)
+    request.set_Type("A")
+    request.set_Value(new_ip_addr)
     with open(log_file, "a") as logfile:
         try:
-            response = client.do_action_with_exception(ftpDnsModifyRequest)
+            response = client.do_action_with_exception(request)
             sms.dns_record_update_sms(name, "-".join(new_ip_addr.split(".")))
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), response))
             r_j = json.loads(response.decode())
@@ -138,8 +165,9 @@ def modify_record_name(domain_name, name, record_id, new_ip_addr):
             OK_response("200.3 OK")
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
-            print({"503": "Failed to renew record."})
-            exit()
+            error_response("503.4")
+            #print({"503.4": "Failed to renew record."})
+            
 
 
 client_ip = get_client_ip_addr()
