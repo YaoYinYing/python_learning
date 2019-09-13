@@ -20,7 +20,8 @@
 ### 服务端部署
 
 1.  安装Anaconda3
-2.  安装阿里云python sdk： `pip install aliyun-python-sdk-core`3.  安装阿里云解析DNS sdk：`pip install aliyun-python-sdk-alidns`
+2.  安装阿里云python sdk： `pip install aliyun-python-sdk-core`
+3.  安装阿里云解析DNS sdk：`pip install aliyun-python-sdk-alidns`
 4.  安装OpenSSL支持：`pip install pyopenssl`
 5.  申请阿里云域名和云解析
 6.  申请阿里云解析和短信服务操作权限的RAM子账号
