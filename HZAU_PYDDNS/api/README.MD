@@ -48,20 +48,6 @@ sms_temp_code | str | 短信模板号
 
 ### 客户端部署
 
-将test_tool/post_test.py释放到任意目录，修改如下参数：
-
-项目 | 属性 | 值
-----|-----|----
-token | str | 动态解析口令，同服务器
-namelist | str list | 子域名列表 ，用英文引号包括，每个子域名用英文逗号隔开
-
-#### python requests
-
-**批量解析**
-1.  安装python3
-2.  安装Requests: `pip install requests`
-3.  运行 `python post_test.py`
-
 #### curl
 
 _Windows 10下可用cmd执行该命令_
@@ -69,6 +55,23 @@ _Windows 10下可用cmd执行该命令_
 **通过curl，只能一次解析一个。**
 
 `curl https://服务器地址/DDNS目录/index.py -X POST -d "token=解析口令&name=解析子域名"`
+
+#### python requests
+
+**批量解析**
+
+将test_tool/post_test.py释放到任意目录，修改如下参数：
+
+项目 | 属性 | 值
+----|-----|----
+token | str | 动态解析口令，同服务器
+namelist | str list | 子域名列表 ，用英文引号包括，每个子域名用英文逗号隔开
+
+1.  安装python3
+2.  安装Requests: `pip install requests`
+3.  修改token和namelist
+4.  运行 `python post_test.py`
+
 
 #### 定期任务
 
