@@ -73,6 +73,7 @@ _Windows 10下可用cmd执行该命令_
 #### 定期任务
 
 Windows: 任务计划管理器
+
 Linux: cron
 
 ### 返回值定义与调试措施
@@ -81,7 +82,7 @@ Linux: cron
 -------|-------|-------
 “401.1”: “HTTPS REQUEST SCHEME IS REQUIRED.” | 使用了不安全的http协议访问 | 改用https协议访问
 “401.2”: “TOKEN ERROR” | 解析口令错误 | 修改解析口令，和服务端一致
-“503.1”: “CONNECTION ERROR”	服务端网络错误 | 服务端网络修复，或稍后再试
+“503.1”: “CONNECTION ERROR” | 服务端网络错误 | 服务端网络修复，或稍后再试
 “503.2”: “Failed to create new record.” | 新解析记录添加失败 | 检查子域名是否有非法字符，或稍后再试
 “503.3”: “Failed to read full records.” | 域名解析查询失败，获取不到现在的解析情况 | 服务端网络修复，或稍后再试
 “503.4”: “Failed to renew record.” | 更新解析记录失败 | 服务端网络修复，或稍后再试
