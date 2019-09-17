@@ -26,7 +26,8 @@
 5.  申请阿里云域名和云解析
 6.  申请阿里云解析和短信服务操作权限的RAM子账号
 7.  申请阿里云短信服务模板， 注意参数“pcname”和“newip” 分别对应子域名和IP地址（已改写为短线相连格式，原格式会被阿里云短信平台拦截）
-8.  在HTTP服务器的配制文件中设置py文件为可执行9.  在HTTP服务器的配制文件中设置https访问，注意添加证书
+8.  在HTTP服务器的配制文件中设置py文件为可执行
+9.  在HTTP服务器的配制文件中设置https访问，注意添加证书
 10.  将api目录下的文件释放至服务器下子目录，
 11.  修改const.py中的参数，如下：
 
@@ -54,21 +55,25 @@ sms_temp_code | str | 短信模板号
 token | str | 动态解析口令，同服务器
 namelist | str list | 子域名列表 ，用英文引号包括，每个子域名用英文逗号隔开
 
-#### Windows
+#### python requests
 
+**批量解析**
 1.  安装python3
 2.  安装Requests: `pip install requests`
-3.  在任务计划管理器中添加任务任务：`python post_test.py`，间隔可为1~2min一次
+3.  运行 `python post_test.py`
 
-#### Linux
+#### curl
 
-**通过curl，只能一次解析一个；cron定期执行：**
+_Windows 10下可用cmd执行该命令_
 
-`curl https://服务器地址/DDNS目录/index.py -X POST -d "token=解析口令&amp;name=解析子域名"`
+**通过curl，只能一次解析一个。**
 
-**通过python，一次可解析多个** **；cron定期执行：**
+`curl https://服务器地址/DDNS目录/index.py -X POST -d "token=解析口令&name=解析子域名"`
 
-同Windows。
+#### 定期任务
+
+Windows: 任务计划管理器
+Linux: cron
 
 ### 返回值定义与调试措施
 
