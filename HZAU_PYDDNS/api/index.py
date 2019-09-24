@@ -14,16 +14,13 @@ from aliyunsdkalidns.request.v20150109.DescribeDomainRecordsRequest import Descr
 from aliyunsdkalidns.request.v20150109.AddDomainRecordRequest import AddDomainRecordRequest
 from aliyunsdkalidns.request.v20150109.DescribeDomainRecordInfoRequest import DescribeDomainRecordInfoRequest
 from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDomainRecordRequest
-
-
 import time
 import sms_dns_change as sms
-from const import client, domain_name, token
+from const import client, domain_name, token, serverchan_SCKEY
 import cgi
 import json
 import os
 from ddns_db import insert_change,exist_and_count
-
 import aliyunsdkcore.request
 aliyunsdkcore.request.set_default_protocol_type("https")
 
@@ -43,6 +40,23 @@ def error_response(response_code):
     print({response_code: response_code_dict[response_code]})
     exit()
     pass
+    
+def serverchan_error_msg(name, code, error_msg):
+    import requests
+    if serverchan_SCKEY != "":
+        requests.get("https://sc.ftqq.com/%s.send?text=服务器%s错误%s&desp=%s" %(serverchan_SCKEY, name, code, str(error_msg)))
+    else:
+        return 0
+        
+        
+def serverchan_ip_change_msg(name, newip):
+    import requests
+    if serverchan_SCKEY != "":
+        requests.get("https://sc.ftqq.com/%s.send?text=服务器%s的IP变为%s" %(serverchan_SCKEY, name, "。".join(newip.split("-"))))
+    else:
+        return 0
+        
+
 
 def OK_response(response_code):
     response_code_dict = {"200.1 OK": "records created", "200.2 OK": "records unchanged",
@@ -59,7 +73,6 @@ def get_client_ip_addr():
     else:
         error_response("401.1")
         #print({"401.1": "HTTPS REQUEST SCHEME IS REQUIRED."})
-        
 
 
 def post_data():
@@ -84,9 +97,10 @@ def describe_full_records(domain_name):
         response = client.do_action_with_exception(request)
         return json.loads(response.decode())
     except Exception as e:
-        error_response("503.1")
+        code ="503.1"
+        serverchan_error_msg(domain_name, code, e)
+        error_response(code)
         #print({"503.1": "CONNECTION ERROR"})
-        
 
 
 # Step 2: search name from existed records
@@ -112,6 +126,7 @@ def create_record(domain_name, name, ip):
         try:
             response = client.do_action_with_exception(request)
             sms.dns_record_update_sms(name, "-".join(ip.split(".")))
+            serverchan_ip_change_msg(name, "-".join(ip.split(".")))
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), response))
             r_j = json.loads(response.decode())
             request_id = r_j["RequestId"]
@@ -122,9 +137,10 @@ def create_record(domain_name, name, ip):
 
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
-            error_response("503.2")
+            code ="503.2"
+            serverchan_error_msg(domain_name, code, e)
+            error_response(code)
             #print({"503.2": "Failed to create new record."})
-            
 
 
 # Step 3b: if name exists, describe record for the name, updated
@@ -140,9 +156,10 @@ def describe_name_record(record_id):
             return ip_value_in_record
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
-            error_response("503.3")
+            code ="503.3"
+            serverchan_error_msg(record_id, code, e)
+            error_response(code)
             #print({"503.3": "Failed to read full records."})
-            
 
 
 # Step 4. if name exists and changed in post, modify the name record. updated
@@ -157,6 +174,7 @@ def modify_record_name(domain_name, name, record_id, new_ip_addr):
         try:
             response = client.do_action_with_exception(request)
             sms.dns_record_update_sms(name, "-".join(new_ip_addr.split(".")))
+            serverchan_ip_change_msg(name, "-".join(new_ip_addr.split(".")))
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), response))
             r_j = json.loads(response.decode())
             request_id = r_j["RequestId"]
@@ -166,7 +184,9 @@ def modify_record_name(domain_name, name, record_id, new_ip_addr):
             OK_response("200.3 OK")
         except Exception as e:
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), traceback.print_exc()))
-            error_response("503.4")
+            code ="503.4"
+            serverchan_error_msg(domain_name, code, e)
+            error_response(code)
             #print({"503.4": "Failed to renew record."})
             
 
