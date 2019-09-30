@@ -16,7 +16,8 @@ from aliyunsdkalidns.request.v20150109.DescribeDomainRecordInfoRequest import De
 from aliyunsdkalidns.request.v20150109.UpdateDomainRecordRequest import UpdateDomainRecordRequest
 import time
 import sms_dns_change as sms
-from const import client, domain_name, token, serverchan_SCKEY
+from const import client, token, serverchan_SCKEY
+import const
 import cgi
 import json
 import os
@@ -25,37 +26,6 @@ import aliyunsdkcore.request
 aliyunsdkcore.request.set_default_protocol_type("https")
 
 log_file = "./Update.log"
-
-def error_response(response_code):
-    response_code_dict = {"401.1": "HTTPS REQUEST SCHEME IS REQUIRED.",
-                          "401.2": "TOKEN ERROR",
-                          "503.1": "CONNECTION ERROR",
-                          "503.2": "Failed to create new record.",
-                          "503.3": "Failed to read full records.",
-                          "503.4": "Failed to renew record.",
-                          }
-    # print("HTTP/1.1 %s OK\r\n" % response_code.split(".")[0])
-    print("content-type:text/html")
-    print("")
-    print({response_code: response_code_dict[response_code]})
-    exit()
-    pass
-    
-def serverchan_error_msg(name, code, error_msg):
-    import requests
-    if serverchan_SCKEY != "":
-        requests.get("https://sc.ftqq.com/%s.send?text=服务器%s错误%s&desp=%s" %(serverchan_SCKEY, name, code, str(error_msg)))
-    else:
-        return 0
-        
-        
-def serverchan_ip_change_msg(name, newip):
-    import requests
-    if serverchan_SCKEY != "":
-        requests.get("https://sc.ftqq.com/%s.send?text=服务器%s的IP变为%s" %(serverchan_SCKEY, name, "。".join(newip.split("-"))))
-    else:
-        return 0
-        
 
 
 def OK_response(response_code):
@@ -67,21 +37,62 @@ def OK_response(response_code):
     print({response_code: response_code_dict[response_code]})
 
 
-def get_client_ip_addr():
-    if os.environ['REQUEST_SCHEME'] == "https":
-        return os.environ['REMOTE_ADDR']
+def error_response(response_code):
+    response_code_dict = {"401.0": "HTTPS REQUEST SCHEME IS REQUIRED.",
+                          "401.1": "POST REQUEST_METHOD IS REQUIRED.",
+                          "401.2": "TOKEN ERROR",
+                          "401.3": "INVALID DOMAIN",
+                          "503.1": "CONNECTION ERROR",
+                          "503.2": "Failed to create new record.",
+                          "503.3": "Failed to read full records.",
+                          "503.4": "Failed to renew record.",
+                          }
+    print("content-type:text/html\n\n")
+    print({response_code: response_code_dict[response_code]})
+    print("</br>Please <a href='mailto:%s'>contact the server administrator</a>." % os.environ['SERVER_ADMIN'])
+    exit()
+    pass
+
+
+def serverchan_error_msg(name, code, error_msg):
+    import requests
+    if serverchan_SCKEY != "":
+        requests.get("https://sc.ftqq.com/%s.send?text=服务器%s错误%s&desp=%s" %(serverchan_SCKEY, name, code, str(error_msg)))
     else:
+        return 0
+        
+        
+def serverchan_ip_change_msg(name, newip):
+    import requests
+    if serverchan_SCKEY != "":
+        requests.get("https://sc.ftqq.com/%s.send?text=服务器%s的IP变为%s" %(serverchan_SCKEY, name, newip.replace(".", "。")))
+    else:
+        return 0
+        
+
+def get_client_ip_addr():
+    if os.environ['REQUEST_SCHEME'] != "https":
+        error_response("401.0")
+    elif os.environ['REQUEST_METHOD'] != "POST" and const.request_method_limit == True:
         error_response("401.1")
-        #print({"401.1": "HTTPS REQUEST SCHEME IS REQUIRED."})
+    else:
+        return os.environ['REMOTE_ADDR']
+
 
 
 def post_data():
     form = cgi.FieldStorage()
+    if (form.getvalue('domain_name')) and (form.getvalue('domain_name') in const.domain_name_list):
+        domain_name = form.getvalue('domain_name')
+    elif (form.getvalue('domain_name')) and (form.getvalue('domain_name') not in const.domain_name_list):
+        error_response("401.3")
+    else:
+        domain_name = const.domain_name
     token_post = form.getvalue('token')
     # print("token_posted = %s" % token_post)
     record_name = form.getvalue('name')
     if token_post == token:
-        return record_name
+        return domain_name, record_name
     else:
         error_response("401.2")
         #print({"401.2": "TOKEN ERROR"})
@@ -125,7 +136,7 @@ def create_record(domain_name, name, ip):
     with open(log_file, 'a') as logfile:
         try:
             response = client.do_action_with_exception(request)
-            sms.dns_record_update_sms(name, "-".join(ip.split(".")))
+            sms.dns_record_update_sms('.'.join([name,domain_name]).replace(".","-"), ip.replace('.', '-'))
             serverchan_ip_change_msg(name, "-".join(ip.split(".")))
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), response))
             r_j = json.loads(response.decode())
@@ -173,7 +184,7 @@ def modify_record_name(domain_name, name, record_id, new_ip_addr):
     with open(log_file, "a") as logfile:
         try:
             response = client.do_action_with_exception(request)
-            sms.dns_record_update_sms(name, "-".join(new_ip_addr.split(".")))
+            sms.dns_record_update_sms('.'.join([name,domain_name]).replace(".","-"), new_ip_addr.replace('.', '-'))
             serverchan_ip_change_msg(name, "-".join(new_ip_addr.split(".")))
             logfile.write("%s \t %s \n" % (str(time.asctime(time.localtime(time.time()))), response))
             r_j = json.loads(response.decode())
@@ -192,7 +203,7 @@ def modify_record_name(domain_name, name, record_id, new_ip_addr):
 
 
 client_ip = get_client_ip_addr()
-name_post = post_data()
+domain_name, name_post = post_data()
 full_records_response = describe_full_records(domain_name)
 is_name_existed, name_data = search_name_from_full_records(name_post, full_records_response)
 if is_name_existed:
