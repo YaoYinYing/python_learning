@@ -1,6 +1,8 @@
 import requests
 
 data = {"token": "token",
+        # set here if not default domain name record is modified.
+        #"domain_name": "not default domain",
         "name" : "name"}
 url = "https://host/HZAU_DDNS/api/index.py"
 
