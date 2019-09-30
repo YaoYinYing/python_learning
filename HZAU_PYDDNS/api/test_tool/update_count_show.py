@@ -4,13 +4,13 @@ import time,datetime
 import traceback
 import cgi
 
-hide_column = 2
+hide_column = 1
 
 def ddns_count_show():
     conn = sqlite3.connect("sqlite file")
     c = conn.cursor()
     sql = '''SELECT * FROM DDNS_UPDATE_COUNT;''' 
-    print("<html><table border='5' cellspacing='2'> ")
+    print("<html><table border='2' cellspacing='0'> ")
     print("<thead><tr>")
     for x in ["record_id","domain name", "name", "count", "latest check"][hide_column:]:
         print("<th>%s</th>" % x )
