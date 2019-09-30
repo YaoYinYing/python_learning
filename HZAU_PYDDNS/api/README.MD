@@ -31,16 +31,19 @@
 10.  将api目录下的文件释放至服务器下子目录，
 11.  修改const.py中的参数，如下：
 
-项目 | 属性 | 值
-----|-----|----
-client | AcsClient实例 | RAM账号*
-ACCESS_KEY_ID | str | RAM账号**
-ACCESS_KEY_SECRET | str | RAM账号**
-token | str | 动态解析口令
-domain_name | str | 域名
-admin_phonenumber | str | 手机号码
-sms_signature | str | 短信签名
-sms_temp_code | str | 短信模板号
+项目 | 属性 | 值 | 默认值与定义
+----|-----|----|-----
+request_method_limit | Boolean | - |False，若为True则禁止get
+client | AcsClient实例 | RAM账号* | ""，必填
+ACCESS_KEY_ID | str | RAM账号** | ""，必填 
+ACCESS_KEY_SECRET | str | RAM账号** | ""，必填
+token | str | 动态解析口令 | ""，必填
+domain_name | str | 域名| ""，必填
+domain_name_list | str list | 域名列表| []，必填
+admin_phonenumber | str | 手机号码| ""，放空则不发短信
+sms_signature | str | 短信签名| ""
+sms_temp_code | str | 短信模板号| ""
+serverchan_SCKEY | str | Server酱tocken| ""，放空则不发消息
 
 *参见[阿里云python SDK快速指南](https://help.aliyun.com/document_detail/53090.html)和阿里云[OpenAPI Explorer](https://api.aliyun.com)
 
@@ -64,8 +67,9 @@ _Windows 10下可用cmd执行该命令_
 
 项目 | 属性 | 值
 ----|-----|----
-token | str | 动态解析口令，同服务器
-namelist | str list | 子域名列表 ，用英文引号包括，每个子域名用英文逗号隔开
+token | str | 必填，动态解析口令，同服务器
+namelist | str list | 必填，子域名列表 ，用英文引号包括，每个子域名用英文逗号隔开
+domain_name | str | 指定解析域名，不加此参数则解析默认域名
 
 1.  安装python3
 2.  安装Requests: `pip install requests`
@@ -83,7 +87,8 @@ Linux: cron
 
 返回值 | 定义 | 解决措施
 -------|-------|-------
-“401.1”: “HTTPS REQUEST SCHEME IS REQUIRED.” | 使用了不安全的http协议访问 | 改用https协议访问
+“401.0”: “HTTPS REQUEST SCHEME IS REQUIRED.” | 使用了不安全的http协议访问 | 改用https协议访问
+"401.1": "POST REQUEST_METHOD IS REQUIRED." | 只允许POST | 只用POST，或者将const.request_method_limit改为False
 “401.2”: “TOKEN ERROR” | 解析口令错误 | 修改解析口令，和服务端一致
 “503.1”: “CONNECTION ERROR” | 服务端网络错误 | 服务端网络修复，或稍后再试
 “503.2”: “Failed to create new record.” | 新解析记录添加失败 | 检查子域名是否有非法字符，或稍后再试
