@@ -43,7 +43,7 @@ domain_name_list | str list | 域名列表| []，必填
 admin_phonenumber | str | 手机号码| ""，放空则不发短信
 sms_signature | str | 短信签名| ""
 sms_temp_code | str | 短信模板号| ""
-serverchan_SCKEY | str | Server酱tocken| ""，放空则不发消息
+serverchan_SCKEY | str | Server酱token| ""，放空则不发消息
 
 *参见[阿里云python SDK快速指南](https://help.aliyun.com/document_detail/53090.html)和阿里云[OpenAPI Explorer](https://api.aliyun.com)
 
