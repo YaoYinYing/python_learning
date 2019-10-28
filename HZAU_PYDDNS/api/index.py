@@ -57,7 +57,10 @@ def error_response(response_code):
 def serverchan_error_msg(name, code, error_msg):
     import requests
     if serverchan_SCKEY != "":
-        requests.get("https://sc.ftqq.com/%s.send?text=服务器%s错误%s&desp=%s" %(serverchan_SCKEY, name, code, str(error_msg)))
+        try:
+            requests.get("https://sc.ftqq.com/%s.send?text=服务器%s错误%s&desp=%s" %(serverchan_SCKEY, name, code, str(error_msg)))
+        except:
+            return 0
     else:
         return 0
         
@@ -65,7 +68,10 @@ def serverchan_error_msg(name, code, error_msg):
 def serverchan_ip_change_msg(name, newip):
     import requests
     if serverchan_SCKEY != "":
-        requests.get("https://sc.ftqq.com/%s.send?text=服务器%s的IP变为%s" %(serverchan_SCKEY, name, newip.replace(".", "。")))
+        try:
+            requests.get("https://sc.ftqq.com/%s.send?text=服务器%s的IP变为%s" %(serverchan_SCKEY, name, newip.replace(".", "。")))
+        except:
+            return 0
     else:
         return 0
         
@@ -77,7 +83,6 @@ def get_client_ip_addr():
         error_response("401.1")
     else:
         return os.environ['REMOTE_ADDR']
-
 
 
 def post_data():
@@ -95,8 +100,6 @@ def post_data():
         return domain_name, record_name
     else:
         error_response("401.2")
-        #print({"401.2": "TOKEN ERROR"})
-        
 
 
 # Step 1: describe full records，updated 
@@ -111,7 +114,6 @@ def describe_full_records(domain_name):
         code ="503.1"
         serverchan_error_msg(domain_name, code, e)
         error_response(code)
-        #print({"503.1": "CONNECTION ERROR"})
 
 
 # Step 2: search name from existed records
@@ -151,7 +153,6 @@ def create_record(domain_name, name, ip):
             code ="503.2"
             serverchan_error_msg(domain_name, code, e)
             error_response(code)
-            #print({"503.2": "Failed to create new record."})
 
 
 # Step 3b: if name exists, describe record for the name, updated
@@ -170,7 +171,6 @@ def describe_name_record(record_id):
             code ="503.3"
             serverchan_error_msg(record_id, code, e)
             error_response(code)
-            #print({"503.3": "Failed to read full records."})
 
 
 # Step 4. if name exists and changed in post, modify the name record. updated
@@ -198,8 +198,7 @@ def modify_record_name(domain_name, name, record_id, new_ip_addr):
             code ="503.4"
             serverchan_error_msg(domain_name, code, e)
             error_response(code)
-            #print({"503.4": "Failed to renew record."})
-            
+         
 
 
 client_ip = get_client_ip_addr()
