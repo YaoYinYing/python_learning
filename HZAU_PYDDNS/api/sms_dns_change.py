@@ -19,7 +19,7 @@ def dns_record_update_sms(name, newip):
         request.add_query_param('PhoneNumbers', const.admin_phonenumber)
         request.add_query_param('SignName', const.sms_signature)
         request.add_query_param('TemplateCode', const.sms_temp_code)
-        request.add_query_param('TemplateParam', "{\"pcname\":\"" + name +"\",\"newip\":\"" + newip + "\"}")
+        request.add_query_param('TemplateParam', "{\"pcname\":\"" + name[:15] + "--" + name[-3:] +"\",\"newip\":\"" + newip[:20] + "\"}")
         response = client.do_action(request)
         # print(str(response, encoding = 'utf-8'))
     else:
