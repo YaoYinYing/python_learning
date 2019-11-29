@@ -14,9 +14,12 @@
 *   监测和记录校园网网络故障事件
 
 ### 项目地址
+该项目已经移动到：
 
-[https://github.com/YaoYinYing/python_learning/tree/master/HZAU_PYDDNS/api](https://github.com/YaoYinYing/python_learning/tree/master/HZAU_PYDDNS/api)
+[https://github.com/YaoYinYing/HZAU_DDNS](https://github.com/YaoYinYing/HZAU_DDNS)
 
+
+此处项目不再更新。
 ### 服务端部署
 
 1.  安装Anaconda3
